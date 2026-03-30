@@ -69,7 +69,7 @@ Como o projeto utiliza apenas tecnologias front-end nativas e uma API pública s
 
 2. Acesse a pasta do projeto:
    ```bash
-   cd seu-repositorio
+   cd projeto_clima
    ```
 
 3. Para visualizar a aplicação, basta abrir o arquivo `index.html` diretamente no seu navegador de preferência.
