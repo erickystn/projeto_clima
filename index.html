@@ -5,35 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Previsão do Tempo</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css" />
 </head>
 <body>
 
-  <!-- TELA DE BUSCA -->
   <div class="card" id="searchCard">
     <h1>Previsão do Tempo</h1>
-
     <div class="form-row">
-      <input
-        type="text"
-        id="cityInput"
-        placeholder="Digite o nome da cidade"
-        autocomplete="off"
-      />
+      <input type="text" id="cityInput" placeholder="Digite o nome da cidade" autocomplete="off" />
       <button id="searchBtn" onclick="handleSearch()">Buscar</button>
     </div>
-
-    <div class="error-box hidden" id="errorBox">
-      Cidade não encontrada. Tente novamente.
-    </div>
+    <div class="error-box hidden" id="errorBox">Cidade não encontrada. Tente novamente.</div>
   </div>
 
-  <!-- TELA DE RESULTADO -->
   <div class="card hidden" id="resultCard">
     <div class="temp-box">
-      <span id="tempValue">--</span><span class="degree">°</span>
+      <i id="weatherIcon" class="wi wi-na"></i>
+      <div style="display: flex;">
+        <span id="tempValue">--</span><span class="degree">°</span>
+      </div>
     </div>
 
     <p class="city-name" id="cityName">--</p>
+    <p id="weatherDesc"></p>
+    <p id="dateTime"></p>
 
     <button class="home-btn" onclick="goHome()" title="Voltar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
