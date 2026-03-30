@@ -29,15 +29,36 @@ O **App de Previsão do Tempo** é uma aplicação web ágil e responsiva que pe
 
 ------
 
-## 📁 Estrutura do Projeto
+## 🏗️ Estrutura do Projeto
 
 ```text
-📁 previsao-do-tempo/
+📁 projeto_clima/
 │
-├── index.html    # Estrutura semântica e interface da aplicação
-├── style.css     # Estilização, layout mobile-first e animações
-└── api.js        # Lógica de busca, manipulação de DOM e requisições HTTP
+├── index.html        # Estrutura e semântica da aplicação
+├── style.css         # Estilização fluida e mobile-first
+├── api.js            # Regras de negócio, requisições (Fetch API) e DOM, com Docstrings (JSDoc)
+├── package.json      # Configuração do ambiente Node e scripts
+│
+└── 📁 tests/
+    └── api.test.js   # Suíte de testes unitários automatizados
 ```
+
+------
+
+## 🧪 Qualidade de Código e Testes
+
+O projeto segue padrões avançados de mercado para garantir a estabilidade das funcionalidades:
+
+1.  **Documentação (JSDoc)**: Todas as funções JavaScript estão estritamente documentadas com Docstrings, detalhando parâmetros, exceções lançadas e tipos de retorno para fácil manutenção.
+2.  **Testes Automatizados (Jest)**: O comportamento lógico da API foi totalmente coberto por testes unitários simulados (Mocks). 
+
+**Cenários testados:**
+* Sucesso no retorno dos dados.
+* Tratamento para cidades inexistentes.
+* Validações de campos vazios.
+* Comportamento perante falhas da API (Erro 500) e Excessos de requisições (Status 429).
+* Abordagem defensiva contra lentidão de rede (Timeout configurado).
+* Validação de quebras de contrato estrutural da API.
 
 ------
 

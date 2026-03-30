@@ -1,4 +1,9 @@
-// ── Elementos Originais ────────────────────────────────
+/** * @fileoverview Lógica principal do aplicativo de previsão do tempo.
+ * Responsável pela manipulação do DOM, requisições HTTP para a API Open-Meteo
+ * e formatação dos dados meteorológicos.
+ */
+
+// ── Elementos do DOM ───────────────────────────────────
 const cityInput  = document.getElementById('cityInput');
 const errorBox   = document.getElementById('errorBox');
 const searchCard = document.getElementById('searchCard');
@@ -6,14 +11,24 @@ const resultCard = document.getElementById('resultCard');
 const tempValue  = document.getElementById('tempValue');
 const cityName   = document.getElementById('cityName');
 const searchBtn  = document.getElementById('searchBtn');
-
-// ── Novos Elementos (Necessários para bater com o print) ──
 const weatherDesc  = document.getElementById('weatherDesc');
 const dateTime     = document.getElementById('dateTime');
-const weatherIcon  = document.getElementById('weatherIcon'); // Supondo que você adicionou <i id="weatherIcon"> no HTML
+const weatherIcon  = document.getElementById('weatherIcon');
 const bodyElement  = document.body;
 
-// ── Geocodificação: cidade → coordenadas ────────────────
+// ── Funções de API ──────────────────────────────────────
+
+/**
+ * Busca as coordenadas geográficas de uma cidade utilizando a API Open-Meteo.
+ *
+ * @async
+ * @param {string} city - O nome da cidade a ser buscada.
+ * @returns {Promise<{latitude: number, longitude: number, name: string, country: string}>} Objeto contendo coordenadas e informações do local.
+ * @throws {Error} Lança um erro se a cidade não for encontrada ou a API falhar.
+ * @example
+ * const coords = await geocodeCity("São Paulo");
+ * // Retorna: { latitude: -23.5475, longitude: -46.6361, name: "São Paulo", country: "Brazil" }
+ */
 async function geocodeCity(city) {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
   const res  = await fetch(url);
@@ -27,27 +42,40 @@ async function geocodeCity(city) {
   return { latitude, longitude, name, country };
 }
 
-// ── Dados climáticos completos via Open-Meteo (Atualizado) ──
-// Renomeando de fetchTemperature para fetchWeatherData pois agora pegamos mais dados
+/**
+ * Obtém os dados climáticos atuais baseados em latitude e longitude.
+ *
+ * @async
+ * @param {number} latitude - A latitude do local.
+ * @param {number} longitude - A longitude do local.
+ * @returns {Promise<Object>} Objeto contendo a temperatura, código do clima, tempo e se é dia ou noite.
+ * @throws {Error} Lança um erro se os dados não estiverem disponíveis.
+ */
 async function fetchWeatherData(latitude, longitude) {
-  // Mudamos o parâmetro de 'current_weather=true' para pedir os blocos específicos: temperatura, código e dia
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&timezone=auto`;
   const res  = await fetch(url);
   const data = await res.json();
 
-  // A API Open-Meteo retorna os dados no bloco 'current' quando usamos o formato acima
   if (!data.current) {
     throw new Error('Dados climáticos indisponíveis');
   }
 
-  return data.current; // Retornamos o objeto com temperature_2m, weather_code, etc.
+  return data.current;
 }
 
-// ── Tradutor de Código de Clima e Ícone (Mapeamento WMO) ─────
-// Converte o código numérico da API em Texto e Classe do Weather Icons
+// ── Funções Utilitárias ─────────────────────────────────
+
+/**
+ * Converte o código numérico WMO da API em uma descrição legível e a respectiva classe de ícone.
+ *
+ * @param {number} code - O código do clima fornecido pela API.
+ * @param {boolean} isDay - Indica se é dia (true) ou noite (false).
+ * @returns {{desc: string, icon: string}} Objeto contendo a descrição e a classe CSS do ícone (Weather Icons).
+ * @example
+ * const clima = getWeatherDetails(0, true);
+ * // Retorna: { desc: "Céu Limpo", icon: "wi-day-sunny" }
+ */
 function getWeatherDetails(code, isDay) {
-  // Mapa base baseado nos códigos WMO. Adicione mais se necessário.
-  // Referência: https://open-meteo.com/en/docs
   const weatherMap = {
     0:  { desc: 'Céu Limpo',          icon: 'wi-day-sunny' },
     1:  { desc: 'Principalmente Limpo', icon: 'wi-day-sunny-overcast' },
@@ -65,28 +93,76 @@ function getWeatherDetails(code, isDay) {
     95: { desc: 'Tempestade',          icon: 'wi-thunderstorm' },
   };
 
-  // Pega o detalhe ou define como desconhecido se o código não estiver no mapa
   let details = weatherMap[code] || { desc: 'Desconhecido', icon: 'wi-na' };
 
-  // Correção para ícones noturnos (Se não for dia, troca o sol pela lua nos códigos 0, 1 e 2)
   if (!isDay) {
     if (code === 0) details.icon = 'wi-night-clear';
     if (code === 1) details.icon = 'wi-night-alt-partly-cloudy';
     if (code === 2) details.icon = 'wi-night-alt-cloudy';
-    // Códigos de chuva/nevoeiro geralmente usam o mesmo ícone dia e noite na Weather Icons
   }
 
   return details;
 }
 
-// ── Formatador de Data (Ex: segunda-feira, 13 de outubro de 2025) ──
-function getFormattedDateTime() {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  // Formata a data atual para o português do Brasil
-  return new Date().toLocaleDateString('pt-BR', options);
+/**
+ * Formata a data e hora retornada pela API para o formato local brasileiro.
+ *
+ * @param {string} apiTime - String de data e hora no formato ISO fornecido pela API (ex: "2026-03-30T15:30").
+ * @returns {string} String formatada, ex: "segunda-feira, 30 de março de 2026 - 15:30".
+ */
+function getFormattedDateTime(apiTime) {
+  const date = new Date(apiTime);
+  
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  
+  return date.toLocaleDateString('pt-BR', options).replace(',', ' -'); 
 }
 
-// ── Handler principal ───────────────────────────────────
+// ── Controladores de Interface (Handlers) ────────────────
+
+/**
+ * Exibe a mensagem de erro na interface do usuário.
+ *
+ * @param {string} msg - A mensagem de erro a ser exibida.
+ */
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.remove('hidden');
+}
+
+/**
+ * Oculta a caixa de mensagem de erro da interface.
+ */
+function hideError() {
+  errorBox.classList.add('hidden');
+}
+
+/**
+ * Restaura o estado inicial da aplicação, voltando para a tela de busca.
+ */
+function goHome() {
+  resultCard.classList.add('hidden');
+  searchCard.classList.remove('hidden');
+  cityInput.value = '';
+  hideError();
+  bodyElement.style.background = 'linear-gradient(160deg, #7dd3ea 0%, #a8dff0 40%, #c8edf7 100%)';
+  cityInput.focus();
+}
+
+/**
+ * Função principal disparada ao clicar no botão de busca ou pressionar Enter.
+ * Coordena a validação, requisições de API e atualização do DOM.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 async function handleSearch() {
   const city = cityInput.value.trim();
 
@@ -100,39 +176,28 @@ async function handleSearch() {
   searchBtn.disabled = true;
 
   try {
-    // 1. Geocodificação
     const { latitude, longitude, name, country } = await geocodeCity(city);
-    
-    // 2. Busca de dados climáticos completos (usando a função atualizada)
     const weatherData = await fetchWeatherData(latitude, longitude);
 
-    // 3. Extração e Processamento dos dados
     const temp = Math.round(weatherData.temperature_2m);
     const code = weatherData.weather_code;
-    const isDay = weatherData.is_day === 1; // API retorna 1 para dia, 0 para noite
-  
+    const isDay = weatherData.is_day === 1;
+    const localTime = weatherData.time;
 
-    // 4. Obtenção da descrição e ícone correspondente
     const details = getWeatherDetails(code, isDay);
 
-    // 5. Atualização da Interface (DOM)
     tempValue.textContent = temp;
     cityName.textContent  = `${name}, ${country}`;
     weatherDesc.textContent = details.desc;
-    dateTime.textContent = getFormattedDateTime();
+    dateTime.textContent = getFormattedDateTime(localTime);
     
-    // Atualiza a classe do ícone (wi wi-na -> wi wi-day-sunny, por exemplo)
     if (weatherIcon) {
       weatherIcon.className = `wi ${details.icon}`;
     }
 
-    // 6. Troca de cor de fundo (Dia/Noite) para bater com o print final
-    // (Fundo claro de dia, fundo escuro/noturno à noite)
     if (isDay) {
-      // Gradiente original (Dia)
       bodyElement.style.background = 'linear-gradient(160deg, #7dd3ea 0%, #a8dff0 40%, #c8edf7 100%)';
     } else {
-      // Gradiente Noturno (Baseado no fundo escuro da imagem de exemplo)
       bodyElement.style.background = 'linear-gradient(160deg, #131d2e 0%, #2c4a6e 100%)';
     }
 
@@ -140,7 +205,7 @@ async function handleSearch() {
     resultCard.classList.remove('hidden');
 
   } catch (err) {
-    console.error(err); // Loga o erro real no console para debug
+    console.error(err);
     showError('Cidade não encontrada ou erro na busca. Tente novamente.');
   } finally {
     searchBtn.textContent = 'Buscar';
@@ -148,28 +213,7 @@ async function handleSearch() {
   }
 }
 
-// ── Voltar para a tela de busca ─────────────────────────
-function goHome() {
-  resultCard.classList.add('hidden');
-  searchCard.classList.remove('hidden');
-  cityInput.value = '';
-  hideError();
-  // Restaura o fundo original ao voltar para a busca
-  bodyElement.style.background = 'linear-gradient(160deg, #7dd3ea 0%, #a8dff0 40%, #c8edf7 100%)';
-  cityInput.focus();
-}
-
-// ── Helpers ─────────────────────────────────────────────
-function showError(msg) {
-  errorBox.textContent = msg;
-  errorBox.classList.remove('hidden');
-}
-
-function hideError() {
-  errorBox.classList.add('hidden');
-}
-
-// ── Enter para buscar ────────────────────────────────────
+// ── Event Listeners ─────────────────────────────────────
 cityInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') handleSearch();
 });
