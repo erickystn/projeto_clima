@@ -19,21 +19,33 @@
   </div>
 
   <div class="card hidden" id="resultCard">
+    
+    <h1 class="result-title">Previsão do Tempo</h1>
+
     <div class="temp-box">
       <i id="weatherIcon" class="wi wi-na"></i>
-      <div style="display: flex;">
-        <span id="tempValue">--</span><span class="degree">°</span>
+      <div class="temp-main">
+        <div style="display: flex; align-items: baseline;">
+          <span id="tempValue">--</span><span class="degree">°</span>
+        </div>
+        <span id="tempMinMax" class="current-minmax">/ --°</span>
       </div>
     </div>
 
-    <p class="city-name" id="cityName">--</p>
-    <p id="weatherDesc"></p>
-    <p id="dateTime"></p>
+    <div class="info-box">
+      <p class="city-name" id="cityName">--</p>
+      <p id="weatherDesc"></p>
+      <p id="dateTime"></p>
+    </div>
+
+    <div class="forecast-section">
+      <h2 class="forecast-title">Próximos Dias</h2>
+      <div id="forecastList" class="forecast-list"></div>
+    </div>
 
     <button class="home-btn" onclick="goHome()" title="Voltar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12L12 3l9 9"/>
-        <path d="M9 21V12h6v9"/>
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
       </svg>
     </button>
   </div>

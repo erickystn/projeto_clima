@@ -1,34 +1,27 @@
 /** * @fileoverview Lógica principal do aplicativo de previsão do tempo.
- * Responsável pela manipulação do DOM, requisições HTTP para a API Open-Meteo
- * e formatação dos dados meteorológicos.
+ * Atualizado para suportar a previsão de múltiplos dias (forecast)
+ * e o mapeamento completo dos códigos de clima WMO.
  */
 
 // ── Elementos do DOM ───────────────────────────────────
-const cityInput  = document.getElementById('cityInput');
-const errorBox   = document.getElementById('errorBox');
-const searchCard = document.getElementById('searchCard');
-const resultCard = document.getElementById('resultCard');
-const tempValue  = document.getElementById('tempValue');
-const cityName   = document.getElementById('cityName');
-const searchBtn  = document.getElementById('searchBtn');
+const cityInput    = document.getElementById('cityInput');
+const errorBox     = document.getElementById('errorBox');
+const searchCard   = document.getElementById('searchCard');
+const resultCard   = document.getElementById('resultCard');
+const tempValue    = document.getElementById('tempValue');
+const cityName     = document.getElementById('cityName');
+const searchBtn    = document.getElementById('searchBtn');
 const weatherDesc  = document.getElementById('weatherDesc');
 const dateTime     = document.getElementById('dateTime');
 const weatherIcon  = document.getElementById('weatherIcon');
 const bodyElement  = document.body;
 
+// Referências para os elementos do novo layout
+const tempMinMax   = document.getElementById('tempMinMax');
+const forecastList = document.getElementById('forecastList');
+
 // ── Funções de API ──────────────────────────────────────
 
-/**
- * Busca as coordenadas geográficas de uma cidade utilizando a API Open-Meteo.
- *
- * @async
- * @param {string} city - O nome da cidade a ser buscada.
- * @returns {Promise<{latitude: number, longitude: number, name: string, country: string}>} Objeto contendo coordenadas e informações do local.
- * @throws {Error} Lança um erro se a cidade não for encontrada ou a API falhar.
- * @example
- * const coords = await geocodeCity("São Paulo");
- * // Retorna: { latitude: -23.5475, longitude: -46.6361, name: "São Paulo", country: "Brazil" }
- */
 async function geocodeCity(city) {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
   const res  = await fetch(url);
@@ -43,58 +36,67 @@ async function geocodeCity(city) {
 }
 
 /**
- * Obtém os dados climáticos atuais baseados em latitude e longitude.
- *
- * @async
- * @param {number} latitude - A latitude do local.
- * @param {number} longitude - A longitude do local.
- * @returns {Promise<Object>} Objeto contendo a temperatura, código do clima, tempo e se é dia ou noite.
- * @throws {Error} Lança um erro se os dados não estiverem disponíveis.
+ * Obtém os dados climáticos (atuais e diários) baseados em latitude e longitude.
  */
 async function fetchWeatherData(latitude, longitude) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`;
   const res  = await fetch(url);
   const data = await res.json();
 
-  if (!data.current) {
+  if (!data.current || !data.daily) {
     throw new Error('Dados climáticos indisponíveis');
   }
 
-  return data.current;
+  return data;
 }
 
 // ── Funções Utilitárias ─────────────────────────────────
 
 /**
- * Converte o código numérico WMO da API em uma descrição legível e a respectiva classe de ícone.
- *
- * @param {number} code - O código do clima fornecido pela API.
- * @param {boolean} isDay - Indica se é dia (true) ou noite (false).
- * @returns {{desc: string, icon: string}} Objeto contendo a descrição e a classe CSS do ícone (Weather Icons).
- * @example
- * const clima = getWeatherDetails(0, true);
- * // Retorna: { desc: "Céu Limpo", icon: "wi-day-sunny" }
+ * Converte o código numérico WMO da API em uma descrição e classe de ícone.
+ * MUDANÇA: Dicionário `weatherMap` foi expandido com TODOS os códigos WMO do Open-Meteo.
  */
 function getWeatherDetails(code, isDay) {
   const weatherMap = {
-    0:  { desc: 'Céu Limpo',          icon: 'wi-day-sunny' },
-    1:  { desc: 'Principalmente Limpo', icon: 'wi-day-sunny-overcast' },
-    2:  { desc: 'Parcialmente Nublado', icon: 'wi-day-cloudy' },
-    3:  { desc: 'Encoberto',           icon: 'wi-cloudy' },
-    45: { desc: 'Nevoeiro',            icon: 'wi-fog' },
-    48: { desc: 'Nevoeiro Deposicional',icon: 'wi-fog' },
-    51: { desc: 'Garoa Leve',         icon: 'wi-sprinkle' },
-    53: { desc: 'Garoa Moderada',     icon: 'wi-sprinkle' },
-    55: { desc: 'Garoa Densa',        icon: 'wi-sprinkle' },
-    61: { desc: 'Chuva Leve',         icon: 'wi-rain' },
-    63: { desc: 'Chuva Moderada',     icon: 'wi-rain' },
-    65: { desc: 'Chuva Forte',        icon: 'wi-rain' },
-    80: { desc: 'Pancadas de Chuva',  icon: 'wi-showers' },
-    95: { desc: 'Tempestade',          icon: 'wi-thunderstorm' },
+    0:  { desc: 'Céu Limpo',                    icon: 'wi-day-sunny' },
+    1:  { desc: 'Principalmente Limpo',         icon: 'wi-day-sunny-overcast' },
+    2:  { desc: 'Parcialmente Nublado',         icon: 'wi-day-cloudy' },
+    3:  { desc: 'Nublado',                      icon: 'wi-cloudy' },
+    45: { desc: 'Neblina',                      icon: 'wi-fog' },
+    48: { desc: 'Nevoeiro',                     icon: 'wi-fog' },
+    51: { desc: 'Garoa Leve',                   icon: 'wi-sprinkle' },
+    53: { desc: 'Garoa Moderada',               icon: 'wi-sprinkle' },
+    55: { desc: 'Garoa Densa',                  icon: 'wi-sprinkle' },
+    // MUDANÇA: Adicionados códigos de garoa congelante
+    56: { desc: 'Garoa Congelante Leve',        icon: 'wi-sleet' }, 
+    57: { desc: 'Garoa Congelante Densa',       icon: 'wi-sleet' },
+    61: { desc: 'Chuva Leve',                   icon: 'wi-rain' },
+    63: { desc: 'Chuva Moderada',               icon: 'wi-rain' },
+    65: { desc: 'Chuva Forte',                  icon: 'wi-rain' },
+    // MUDANÇA: Adicionados códigos de chuva congelante
+    66: { desc: 'Chuva Congelante Leve',        icon: 'wi-rain-mix' }, 
+    67: { desc: 'Chuva Congelante Forte',       icon: 'wi-rain-mix' },
+    // MUDANÇA: Adicionados códigos de neve
+    71: { desc: 'Neve Leve',                    icon: 'wi-snow' },
+    73: { desc: 'Neve Moderada',                icon: 'wi-snow' },
+    75: { desc: 'Neve Forte',                   icon: 'wi-snow' },
+    77: { desc: 'Grãos de Neve',                icon: 'wi-snow' },
+    80: { desc: 'Pancadas de Chuva Leves',      icon: 'wi-showers' },
+    // MUDANÇA: Adicionados códigos de pancadas de chuva moderadas e fortes (muito comuns no Brasil)
+    81: { desc: 'Pancadas de Chuva',            icon: 'wi-showers' },
+    82: { desc: 'Pancadas de Chuva Fortes',     icon: 'wi-showers' },
+    // MUDANÇA: Adicionados códigos de pancadas de neve
+    85: { desc: 'Pancadas de Neve Leves',       icon: 'wi-snow' },
+    86: { desc: 'Pancadas de Neve Fortes',      icon: 'wi-snow' },
+    95: { desc: 'Tempestade',                   icon: 'wi-thunderstorm' },
+    96: { desc: 'Tempestade com granizo',       icon: 'wi-storm-showers' }, 
+    99: { desc: 'Tempestade forte com granizo', icon: 'wi-storm-showers' }
   };
 
+  // Se o código realmente não existir (algo raro agora), mostra desconhecido
   let details = weatherMap[code] || { desc: 'Desconhecido', icon: 'wi-na' };
 
+  // Ajusta o ícone para a versão noturna caso isDay seja false e seja um dos códigos base
   if (!isDay) {
     if (code === 0) details.icon = 'wi-night-clear';
     if (code === 1) details.icon = 'wi-night-alt-partly-cloudy';
@@ -104,49 +106,42 @@ function getWeatherDetails(code, isDay) {
   return details;
 }
 
-/**
- * Formata a data e hora retornada pela API para o formato local brasileiro.
- *
- * @param {string} apiTime - String de data e hora no formato ISO fornecido pela API (ex: "2026-03-30T15:30").
- * @returns {string} String formatada, ex: "segunda-feira, 30 de março de 2026 - 15:30".
- */
 function getFormattedDateTime(apiTime) {
   const date = new Date(apiTime);
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; 
+  return date.toLocaleDateString('pt-BR', options).toLowerCase(); 
+}
+
+/**
+ * Função para formatar apenas o dia e a semana para a lista de próximos dias.
+ */
+function getDailyDateInfo(dateString) {
+  const [year, month, day] = dateString.split('-');
+  const date = new Date(year, month - 1, day);
   
-  const options = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  let weekday = date.toLocaleDateString('pt-BR', { weekday: 'long' });
+  weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1); 
+  
+  const dayStr = date.getDate();
+  const monthStr = date.toLocaleDateString('pt-BR', { month: 'long' });
+
+  return {
+    weekday: weekday,
+    dayMonth: `${dayStr} de ${monthStr}`
   };
-  
-  return date.toLocaleDateString('pt-BR', options).replace(',', ' -'); 
 }
 
 // ── Controladores de Interface (Handlers) ────────────────
 
-/**
- * Exibe a mensagem de erro na interface do usuário.
- *
- * @param {string} msg - A mensagem de erro a ser exibida.
- */
 function showError(msg) {
   errorBox.textContent = msg;
   errorBox.classList.remove('hidden');
 }
 
-/**
- * Oculta a caixa de mensagem de erro da interface.
- */
 function hideError() {
   errorBox.classList.add('hidden');
 }
 
-/**
- * Restaura o estado inicial da aplicação, voltando para a tela de busca.
- */
 function goHome() {
   resultCard.classList.add('hidden');
   searchCard.classList.remove('hidden');
@@ -157,12 +152,47 @@ function goHome() {
 }
 
 /**
- * Função principal disparada ao clicar no botão de busca ou pressionar Enter.
- * Coordena a validação, requisições de API e atualização do DOM.
- *
- * @async
- * @returns {Promise<void>}
+ * Constrói o HTML dos próximos 4 dias
  */
+function renderForecast(dailyData) {
+  forecastList.innerHTML = ''; 
+
+  // O índice 0 é hoje. Vamos iterar do 1 ao 4 (próximos 4 dias)
+  for (let i = 1; i <= 4; i++) {
+    if (!dailyData.time[i]) break; 
+
+    const dateStr = dailyData.time[i];
+    const maxTemp = Math.round(dailyData.temperature_2m_max[i]);
+    const minTemp = Math.round(dailyData.temperature_2m_min[i]);
+    const code = dailyData.weather_code[i];
+    
+    const details = getWeatherDetails(code, true); 
+    const dateInfo = getDailyDateInfo(dateStr);
+
+    const itemHtml = `
+      <div class="forecast-item">
+        <div class="forecast-day-info">
+          <span class="forecast-weekday">${dateInfo.weekday}</span>
+          <span class="forecast-date">${dateInfo.dayMonth}</span>
+        </div>
+        <div class="forecast-weather-info">
+          <i class="wi ${details.icon}"></i>
+          <span class="forecast-desc">${details.desc}</span>
+        </div>
+        <div class="forecast-temps">
+          <div class="temp-row">
+            <span class="arrow-up">▲</span> ${maxTemp}°
+          </div>
+          <div class="temp-row">
+            <span class="arrow-down">▼</span> ${minTemp}°
+          </div>
+        </div>
+      </div>
+    `;
+    forecastList.insertAdjacentHTML('beforeend', itemHtml);
+  }
+}
+
 async function handleSearch() {
   const city = cityInput.value.trim();
 
@@ -179,21 +209,29 @@ async function handleSearch() {
     const { latitude, longitude, name, country } = await geocodeCity(city);
     const weatherData = await fetchWeatherData(latitude, longitude);
 
-    const temp = Math.round(weatherData.temperature_2m);
-    const code = weatherData.weather_code;
-    const isDay = weatherData.is_day === 1;
-    const localTime = weatherData.time;
+    const current = weatherData.current;
+    const daily   = weatherData.daily;
+
+    const temp  = Math.round(current.temperature_2m);
+    const code  = current.weather_code;
+    const isDay = current.is_day === 1;
+    const localTime = current.time;
+
+    const todayMin = Math.round(daily.temperature_2m_min[0]);
 
     const details = getWeatherDetails(code, isDay);
 
-    tempValue.textContent = temp;
-    cityName.textContent  = `${name}, ${country}`;
+    tempValue.textContent   = temp;
+    tempMinMax.textContent  = `/ ${todayMin}°`; 
+    cityName.textContent    = `${name}, ${country}`;
     weatherDesc.textContent = details.desc;
-    dateTime.textContent = getFormattedDateTime(localTime);
+    dateTime.textContent    = getFormattedDateTime(localTime);
     
     if (weatherIcon) {
       weatherIcon.className = `wi ${details.icon}`;
     }
+
+    renderForecast(daily);
 
     if (isDay) {
       bodyElement.style.background = 'linear-gradient(160deg, #7dd3ea 0%, #a8dff0 40%, #c8edf7 100%)';
