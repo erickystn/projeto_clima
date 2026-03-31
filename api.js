@@ -152,12 +152,20 @@ function goHome() {
 }
 
 /**
- * Constrói o HTML dos próximos 4 dias
+ * MUDANÇA (Segurança): Sanitiza strings para evitar injeção de HTML (XSS).
+ */
+function sanitizeHTML(str) {
+  const temp = document.createElement('div');
+  temp.textContent = str;
+  return temp.innerHTML;
+}
+
+/**
+ * Constrói o HTML dos próximos 4 dias (Agora com proteção XSS)
  */
 function renderForecast(dailyData) {
   forecastList.innerHTML = ''; 
 
-  // O índice 0 é hoje. Vamos iterar do 1 ao 4 (próximos 4 dias)
   for (let i = 1; i <= 4; i++) {
     if (!dailyData.time[i]) break; 
 
@@ -169,15 +177,20 @@ function renderForecast(dailyData) {
     const details = getWeatherDetails(code, true); 
     const dateInfo = getDailyDateInfo(dateStr);
 
+    // Variáveis sanitizadas antes da injeção no DOM
+    const safeWeekday = sanitizeHTML(dateInfo.weekday);
+    const safeDayMonth = sanitizeHTML(dateInfo.dayMonth);
+    const safeDesc = sanitizeHTML(details.desc);
+
     const itemHtml = `
       <div class="forecast-item">
         <div class="forecast-day-info">
-          <span class="forecast-weekday">${dateInfo.weekday}</span>
-          <span class="forecast-date">${dateInfo.dayMonth}</span>
+          <span class="forecast-weekday">${safeWeekday}</span>
+          <span class="forecast-date">${safeDayMonth}</span>
         </div>
         <div class="forecast-weather-info">
           <i class="wi ${details.icon}"></i>
-          <span class="forecast-desc">${details.desc}</span>
+          <span class="forecast-desc">${safeDesc}</span>
         </div>
         <div class="forecast-temps">
           <div class="temp-row">
