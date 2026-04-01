@@ -124,7 +124,7 @@ Como o projeto utiliza apenas tecnologias front-end nativas e uma API pública, 
 
 1. Clone este repositório em sua máquina utilizando o terminal:
    ```bash
-   git clone [https://github.com/erickystn/projeto_clima.git](https://github.com/erickystn/projeto_clima.git)
+   git clone https://github.com/erickystn/projeto_clima.git
    ```
 
 2. Acesse a pasta raiz do projeto:
