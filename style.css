@@ -21,6 +21,10 @@ body {
   background: linear-gradient(160deg, #7dd3ea 0%, #a8dff0 40%, #c8edf7 100%);
   padding: 16px;
   transition: background 0.6s ease; 
+
+  /* ADICIONE AS DUAS LINHAS ABAIXO */
+  position: relative; 
+  padding-bottom: 80px;
 }
 
 /* ══════════════════════════════════════════
@@ -325,6 +329,43 @@ button#searchBtn:active { transform: scale(0.97); }
 
 .home-btn:hover  { background: #3578c0; }
 .home-btn:active { transform: scale(0.95); }
+
+/* ══════════════════════════════════════════
+   Footer (Avisos Legais)
+══════════════════════════════════════════ */
+.app-footer {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  /* Cor que se mistura bem com fundos claros e escuros */
+  color: rgba(44, 74, 110, 0.75); 
+  font-size: clamp(0.65rem, 2vw, 0.75rem);
+  line-height: 1.4;
+  padding: 0 16px;
+}
+
+.app-footer p {
+  margin-bottom: 4px;
+}
+
+.app-footer a {
+  color: #4a90d9;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.app-footer a:hover {
+  text-decoration: underline;
+  color: #2c4a6e;
+}
+
+/* Transição do texto do footer para o modo noturno */
+body[style*="#131d2e"] .app-footer {
+  color: rgba(255, 255, 255, 0.5);
+}
 
 /* ══════════════════════════════════════════
    Animation
