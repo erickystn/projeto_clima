@@ -1,13 +1,37 @@
 # 🌤️ App de Previsão do Tempo
 
----
+<br />
 
-<div align="center"> 
-   <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5 Badge" /> 
-   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3 Badge" /> 
-   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript Badge" /> 
-   <img src="https://img.shields.io/badge/Open_Meteo_API-00A4D3?style=for-the-badge&logo=json&logoColor=white" alt="API Badge" />
+<div align="center">
+
+[![Deploy GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Live_Demo-222222?style=for-the-badge&logo=githubpages&logoColor=white)](https://erickystn.github.io/projeto_clima/)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
+[![Open-Meteo](https://img.shields.io/badge/Open_Meteo_API-00A4D3?style=for-the-badge&logo=json&logoColor=white)](https://open-meteo.com/)
+[![Weather Icons](https://img.shields.io/badge/Weather_Icons-v2.0.12-3498DB?style=for-the-badge)](https://erikflowers.github.io/weather-icons/)
+[![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)](https://jestjs.io/pt-BR/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Concluído-brightgreen?style=for-the-badge)](#)
+
 </div>
+
+<br />
+
+> 🔗 **Acesso ao Vivo:** Experimente a aplicação diretamente no seu navegador através do GitHub Pages: **[https://erickystn.github.io/projeto_clima/](https://erickystn.github.io/projeto_clima/)**
+
+<br />
+
+<details open>
+  <summary><strong>📸 Apresentação Visual da Interface</strong></summary>
+
+  <br />
+
+  <div align="center">
+    <p><em>Interface responsiva com suporte a alternância dinâmica de tema (Dia/Noite), cards meteorológicos com efeito de elevação e previsão estendida para 4 dias.</em></p>
+  </div>
+
+</details>
 
 <br />
 
@@ -33,6 +57,50 @@ O **App de Previsão do Tempo** é uma aplicação web ágil e responsiva que pe
 
 ------
 
+## 🎯 Diferenciais e Destaques Técnicos
+
+- **Orquestração Assíncrona Encadeada:** Encademento eficiente de duas chamadas assíncronas REST (`Geocoding API` -> `Forecast API`), transformando texto livre do usuário em coordenadas geográficas de alta precisão antes da consulta climática.
+- **Mapeamento Climático Abrangente (WMO):** Dicionário completo de códigos meteorológicos da Organização Meteorológica Mundial traduzido para o português do Brasil, associando cada condição a ícones vetoriais da biblioteca *Weather Icons* com variações condicionais diurnas e noturnas.
+- **Segurança e Sanitização Ativa (XSS):** Implementação da função `sanitizeHTML()` utilizando um elemento desacoplado do DOM (`document.createElement('div')`) para sanitizar dados dinâmicos da previsão estendida antes da injeção no documento, além de priorizar `textContent` nas inserções textuais.
+- **Arquitetura de Resiliência de Rede:** Implementação de cancelamento controlado de requisições lentas via `AbortController` com limite de tolerância (timeout de 1000ms), prevenindo travamento do navegador e tratando especificamente erros de limite de taxa (`Status 429`) e falhas de servidor (`Status 500`).
+- **Design Adaptativo com CSS Fluido:** Uso de funções matemáticas nativas (`clamp()`, `max()`) e unidades dinâmicas (`dvh`) para garantir que a tipografia e os cards se adaptem com perfeição a qualquer viewport, do celular pequeno (320px) até monitores ultrawide.
+
+------
+
+## 🔄 Fluxo de Dados e Ciclo de Vida da Aplicação
+
+O fluxo abaixo ilustra o ciclo completo da aplicação, desde a interação inicial do usuário até o processamento das APIs e atualização reativa da interface:
+
+```mermaid
+flowchart TD
+    A([Usuário acessa a aplicação]) --> B[Exibe Card de Busca #searchCard]
+    B --> C[Usuário digita o nome da cidade e dispara Busca]
+    C --> D{Validação do Input}
+    D -- Entrada Vazia / Apenas Espaços --> E[Dispara showError: 'Por favor, digite o nome de uma cidade']
+    D -- Entrada Válida --> F[Bloqueia botão e exibe feedback 'Buscando...']
+    
+    F --> G[1ª Chamada: geocodeCity - Open-Meteo Geocoding API]
+    G --> H{Cidade Encontrada?}
+    H -- Não / Array Vazio --> I[Lança erro e exibe alerta visual amigável]
+    H -- Sim --> J[Extrai Latitude, Longitude, Nome e País]
+    
+    J --> K[2ª Chamada: fetchWeatherData - Open-Meteo Forecast API]
+    K --> L[Retorna dados meteorológicos atuais e diários]
+    
+    L --> M[Processamento de Dados e Regras de Negócio]
+    M --> N[getWeatherDetails: Traduz código WMO e define ícone Weather Icons]
+    M --> O[Verifica indicador is_day: Aplica gradiente Diurno ou Noturno no Body]
+    M --> P[getFormattedDateTime: Converte timestamp ISO para pt-BR local]
+    M --> Q[renderForecast: Sanitiza via sanitizeHTML e monta cards dos 4 dias]
+    
+    N & O & P & Q --> R[Atualiza elementos do DOM e oculta #searchCard]
+    R --> S[Exibe Painel de Resultados #resultCard com transição suave]
+    S --> T[Usuário clica no botão Home .home-btn]
+    T --> U[Restaura fundo padrão, limpa input e volta para tela inicial]
+```
+
+------
+
 ## 🏗️ Estrutura do Projeto
 
 ```text
@@ -46,6 +114,70 @@ O **App de Previsão do Tempo** é uma aplicação web ágil e responsiva que pe
 └── 📁 tests/
     └── api.test.js   # Suíte de testes unitários automatizados
 ```
+
+### Detalhamento das Responsabilidades dos Arquivos
+
+* `index.html`: Marcação semântica com cabeçalhos estruturados, input sanitizado com `maxlength="100"`, integração CDN com SRI (*Subresource Integrity*) do *Weather Icons* e templates dos cards de busca e resultado.
+* `style.css`: Estilização arquitetada em padrão *Mobile-First*, contendo variáveis CSS, gradientes reativos de dia e noite, funções `clamp()` para tipografia fluida, sombras suaves de elevação e regras de `@media (prefers-reduced-motion)`.
+* `api.js`: Camada de controle e lógica de negócio. Responsável pela orquestração das chamadas `fetch`, tradução do catálogo WMO, manipulação seletiva do DOM, sanitização preventiva contra XSS e gestão de estados.
+* `package.json`: Manifesto do projeto configurado para execução de testes unitários automatizados através do script `npm test` utilizando Jest em ambiente CommonJS.
+* `tests/api.test.js`: Suíte de testes unitários cobrindo 7 cenários distintos de execução da API climática através de mocks globais do `fetch` e verificação de `AbortController`.
+* `NOTICE.md` e `LICENSE`: Documentação de conformidade legal com atribuição expressa aos serviços abertos da Open-Meteo, biblioteca Weather Icons e licença MIT do projeto.
+
+------
+
+## 🌐 Consumo e Integração de APIs Externas (Open-Meteo)
+
+A aplicação consome a infraestrutura da **Open-Meteo**, orquestrando duas consultas RESTful consecutivas sem a necessidade de chaves privadas (*API Keys*):
+
+| Serviço / API | Método | Endpoint Base | Parâmetros Principais | Finalidade |
+| :--- | :---: | :--- | :--- | :--- |
+| **Geocoding API** | `GET` | `https://geocoding-api.open-meteo.com/v1/search` | `name`, `count=1`, `language=pt`, `format=json` | Converte o nome textual digitado em latitude e longitude. |
+| **Forecast API** | `GET` | `https://api.open-meteo.com/v1/forecast` | `latitude`, `longitude`, `current`, `daily`, `timezone=auto` | Fornece temperatura atual, código WMO, flag dia/noite e previsão para 4 dias. |
+
+### Exemplo de Payload: Geocoding API
+
+```json
+{
+  "results": [
+    {
+      "id": 3448439,
+      "name": "São Paulo",
+      "latitude": -23.5475,
+      "longitude": -46.6361,
+      "country_code": "BR",
+      "country": "Brasil"
+    }
+  ]
+}
+```
+
+### Exemplo de Payload: Forecast API
+
+```json
+{
+  "current": {
+    "time": "2026-03-31T14:30",
+    "temperature_2m": 26.4,
+    "is_day": 1,
+    "weather_code": 1
+  },
+  "daily": {
+    "time": ["2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04"],
+    "weather_code": [1, 2, 80, 0, 1],
+    "temperature_2m_max": [28.2, 27.5, 24.1, 29.0, 30.2],
+    "temperature_2m_min": [18.5, 17.8, 19.0, 18.2, 19.5]
+  }
+}
+```
+
+### Tratamento de Resiliência e Erros de Rede
+
+A aplicação possui tratamento defensivo para contingências de comunicação:
+- **Status 200 (OK):** Extração imediata e renderização dos dados na interface.
+- **Status 429 (Too Many Requests):** Lançamento de exceção de excesso de requisições orientando aguardar antes de nova tentativa.
+- **Status 500 (Internal Server Error):** Captura em bloco `try/catch` informando indisponibilidade temporária do serviço.
+- **Timeout / AbortError:** Tratamento via `AbortController` interrompendo conexões que ultrapassem o limite tolerável.
 
 ------
 
@@ -64,6 +196,63 @@ Utilizar a aplicação é extremamente simples e intuitivo:
 
 ------
 
+## 💻 Exemplos de Código
+
+Abaixo estão trechos reais da lógica implementada no arquivo `api.js`:
+
+### 1. Geocodificação com Sanitização de Parâmetros
+```javascript
+async function geocodeCity(city) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
+  const res  = await fetch(url);
+  const data = await res.json();
+
+  if (!data.results || data.results.length === 0) {
+    throw new Error('Cidade não encontrada');
+  }
+
+  const { latitude, longitude, name, country } = data.results[0];
+  return { latitude, longitude, name, country };
+}
+```
+
+### 2. Sanitização de Conteúdo contra XSS
+```javascript
+function sanitizeHTML(str) {
+  const temp = document.createElement('div');
+  temp.textContent = str;
+  return temp.innerHTML;
+}
+```
+
+### 3. Mapeamento Universal WMO e Ícones Dia/Noite
+```javascript
+function getWeatherDetails(code, isDay) {
+  const weatherMap = {
+    0:  { desc: 'Céu Limpo',            icon: 'wi-day-sunny' },
+    1:  { desc: 'Principalmente Limpo', icon: 'wi-day-sunny-overcast' },
+    2:  { desc: 'Parcialmente Nublado', icon: 'wi-day-cloudy' },
+    3:  { desc: 'Nublado',              icon: 'wi-cloudy' },
+    45: { desc: 'Neblina',              icon: 'wi-fog' },
+    61: { desc: 'Chuva Leve',           icon: 'wi-rain' },
+    95: { desc: 'Tempestade',           icon: 'wi-thunderstorm' },
+    96: { desc: 'Tempestade com granizo', icon: 'wi-storm-showers' }
+  };
+
+  let details = weatherMap[code] || { desc: 'Desconhecido', icon: 'wi-na' };
+
+  if (!isDay) {
+    if (code === 0) details.icon = 'wi-night-clear';
+    if (code === 1) details.icon = 'wi-night-alt-partly-cloudy';
+    if (code === 2) details.icon = 'wi-night-alt-cloudy';
+  }
+
+  return details;
+}
+```
+
+------
+
 ## 🧪 Qualidade de Código, IA e Testes
 
 O projeto segue padrões avançados de mercado para garantir a estabilidade das funcionalidades:
@@ -77,6 +266,18 @@ O projeto segue padrões avançados de mercado para garantir a estabilidade das 
 * Validações de campos vazios e quebras de contrato estrutural da API.
 * Comportamento perante falhas da API (Erro 500) e excessos de requisições (Status 429).
 * Abordagem defensiva contra lentidão de rede (Timeout configurado).
+
+### Matriz de Testes Unitários (`tests/api.test.js`)
+
+| # | Cenário Avaliado | Tipo de Teste | Comportamento Esperado |
+| :-: | :--- | :---: | :--- |
+| **1** | Nome de cidade válido | Sucesso | Retorna objeto normalizado com dados e temperatura. |
+| **2** | Nome de cidade inexistente | Exceção Tratada | Lança erro `Cidade não encontrada`. |
+| **3** | Entrada vazia ou espaços | Validação Local | Interrompe sem disparar requisição HTTP (`Entrada vazia`). |
+| **4** | Servidor fora do ar (Erro 500) | Falha de Rede | Dispara exceção defensiva `Falha na API`. |
+| **5** | Excesso de requisições (Status 429) | Rate Limit | Bloqueia execução e informa `Excesso de requisições`. |
+| **6** | Conexão lenta (> 1000ms) | Timeout | Dispara `AbortError` capturado como `Timeout de conexão`. |
+| **7** | Mudança no payload do servidor | Quebra de Contrato | Identifica ausência das propriedades e lança `Formato inválido`. |
 
 ------
 
@@ -135,6 +336,30 @@ Como o projeto utiliza apenas tecnologias front-end nativas e uma API pública, 
 3. **Para executar:** Basta dar um duplo clique no arquivo `index.html` para abri-lo diretamente no seu navegador de preferência.
    > **Dica para Desenvolvedores:** Caso queira editar o código e ver as mudanças em tempo real, abra a pasta do projeto no [Visual Studio Code](https://code.visualstudio.com/) e inicie a extensão **Live Server**.
 
+### Executando os Testes Automatizados (Jest)
+
+Para rodar a suíte de testes unitários contida no diretório `tests/`:
+
+1. Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em seu computador.
+2. Instale as dependências de desenvolvimento:
+   ```bash
+   npm install
+   ```
+3. Execute o comando de teste:
+   ```bash
+   npm test
+   ```
+
+------
+
+## 📈 Melhorias e Próximos Passos (Roadmap)
+
+- [ ] **Geolocalização Automática Opcional:** Adicionar botão de detecção via `navigator.geolocation` mantendo o consentimento prévio do usuário.
+- [ ] **Migração Completa do DOM:** Substituir qualquer `insertAdjacentHTML` remanescente por `document.createElement()` para robustez máxima.
+- [ ] **Cache Local com LocalStorage:** Armazenar consultas recentes de clima para visualização offline instantânea.
+- [ ] **Suporte a PWA (Progressive Web App):** Adicionar `manifest.json` e Service Worker para instalação do aplicativo em smartphones.
+- [ ] **Internacionalização (i18n):** Suporte a múltiplos idiomas (Inglês, Espanhol) além do Português do Brasil.
+
 ------
 
 ## 🤝 Como Contribuir
@@ -146,6 +371,13 @@ Contribuições são sempre bem-vindas! Se você deseja melhorar o projeto, siga
 3. Faça o commit das suas alterações utilizando *Conventional Commits* (`git commit -m 'feat: adiciona nova funcionalidade incrível'`).
 4. Faça o Push para a sua branch (`git push origin feature/sua-feature-incrivel`).
 5. Abra um *Pull Request*.
+
+------
+
+## 👤 Autor
+
+* **Desenvolvedor:** [Ericky Sant'ana](https://github.com/erickystn)
+* **Perfil no GitHub:** [@erickystn](https://github.com/erickystn)
 
 ------
 
